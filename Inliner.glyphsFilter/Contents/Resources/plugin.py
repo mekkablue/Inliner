@@ -1,4 +1,5 @@
 # encoding: utf-8
+from __future__ import division, print_function, unicode_literals
 
 ###########################################################################################################
 #
@@ -18,6 +19,7 @@ import objc
 from GlyphsApp import *
 from GlyphsApp.plugins import *
 
+@objc.python_method
 def offsetLayer( thisLayer, offset, makeStroke=False, position=0.5, autoStroke=False ):
 	offsetFilter = NSClassFromString("GlyphsFilterOffsetCurve")
 	offsetFilter.offsetLayer_offsetX_offsetY_makeStroke_autoStroke_position_error_shadow_(
@@ -39,6 +41,7 @@ class Inliner(FilterWithDialog):
 	strokeWidthField = objc.IBOutlet()
 	inlineWidthField = objc.IBOutlet()
 	
+	@objc.python_method
 	def settings(self):
 		self.menuName = u"Inliner"
 		
@@ -49,6 +52,7 @@ class Inliner(FilterWithDialog):
 		self.loadNib('IBdialog', __file__)
 	
 	# On dialog show
+	@objc.python_method
 	def start(self):
 		# Set default value
 		Glyphs.registerDefault('com.mekkablue.Inliner.strokeWidth', 50.0)
@@ -74,6 +78,7 @@ class Inliner(FilterWithDialog):
 		self.update()
 	
 	# Actual filter
+	@objc.python_method
 	def filter(self, layer, inEditView, customParameters):
 		# Defaults
 		inlineWidth = 10.0
@@ -109,6 +114,7 @@ class Inliner(FilterWithDialog):
 			for thisPath in thisLayer.paths:
 				layer.paths.append(thisPath.copy())
 	
+	@objc.python_method
 	def generateCustomParameter( self ):
 		return "%s; stroke:%s; inline:%s;" % (
 			self.__class__.__name__, 
@@ -116,6 +122,7 @@ class Inliner(FilterWithDialog):
 			Glyphs.defaults['com.mekkablue.Inliner.inlineWidth'],
 			)
 	
+	@objc.python_method
 	def __file__(self):
 		"""Please leave this method unchanged"""
 		return __file__
