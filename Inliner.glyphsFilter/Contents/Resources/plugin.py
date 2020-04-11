@@ -43,10 +43,7 @@ def offsetLayer( thisLayer, offset, makeStroke=False, position=0.5, autoStroke=F
 			None, None )
 
 class Inliner(FilterWithDialog):
-	
 	# Definitions of IBOutlets
-	
-	# The NSView object from the User Interface. Keep this here!
 	dialog = objc.IBOutlet()
 	
 	# Text field in dialog
