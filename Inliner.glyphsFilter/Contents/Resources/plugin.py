@@ -18,17 +18,29 @@ from __future__ import division, print_function, unicode_literals
 import objc
 from GlyphsApp import *
 from GlyphsApp.plugins import *
+from Foundation import NSClassFromString
 
 @objc.python_method
 def offsetLayer( thisLayer, offset, makeStroke=False, position=0.5, autoStroke=False ):
 	offsetFilter = NSClassFromString("GlyphsFilterOffsetCurve")
-	offsetFilter.offsetLayer_offsetX_offsetY_makeStroke_autoStroke_position_error_shadow_(
-		thisLayer,
-		offset, offset, # horizontal and vertical offset
-		makeStroke,     # if True, creates a stroke
-		autoStroke,     # if True, distorts resulting shape to vertical metrics
-		position,       # stroke distribution to the left and right, 0.5 = middle
-		None, None )
+	try:
+		# GLYPHS 3:	
+		offsetFilter.offsetLayer_offsetX_offsetY_makeStroke_autoStroke_position_metrics_error_shadow_capStyleStart_capStyleEnd_keepCompatibleOutlines_(
+			thisLayer,
+			offset, offset, # horizontal and vertical offset
+			makeStroke,     # if True, creates a stroke
+			autoStroke,     # if True, distorts resulting shape to vertical metrics
+			position,       # stroke distribution to the left and right, 0.5 = middle
+			None, None, None, 0, 0, False )
+	except:
+		# GLYPHS 2:
+		offsetFilter.offsetLayer_offsetX_offsetY_makeStroke_autoStroke_position_error_shadow_(
+			thisLayer,
+			offset, offset, # horizontal and vertical offset
+			makeStroke,     # if True, creates a stroke
+			autoStroke,     # if True, distorts resulting shape to vertical metrics
+			position,       # stroke distribution to the left and right, 0.5 = middle
+			None, None )
 
 class Inliner(FilterWithDialog):
 	
@@ -85,14 +97,14 @@ class Inliner(FilterWithDialog):
 		strokeWidth = 50.0
 		
 		# Called on font export, get value from customParameters
-		if customParameters.has_key('stroke'):
+		if 'stroke' in customParameters:
 			inlineWidth = customParameters['stroke']
 		# Called through UI, use stored value
 		else:
 			inlineWidth = float(Glyphs.defaults['com.mekkablue.Inliner.strokeWidth'])
 
 		# Called on font export, get value from customParameters
-		if customParameters.has_key('inline'):
+		if 'inline' in customParameters:
 			strokeWidth = customParameters['inline']
 		# Called through UI, use stored value
 		else:
@@ -112,7 +124,12 @@ class Inliner(FilterWithDialog):
 		layer.clear()
 		for thisLayer in (layerL, layerR):
 			for thisPath in thisLayer.paths:
-				layer.paths.append(thisPath.copy())
+				try:
+					# GLYPHS 3:
+					layer.shapes.append(thisPath.copy())
+				except:
+					# GLYPHS 2:
+					layer.paths.append(thisPath.copy())
 	
 	@objc.python_method
 	def generateCustomParameter( self ):
