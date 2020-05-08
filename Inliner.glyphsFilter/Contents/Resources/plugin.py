@@ -49,6 +49,7 @@ class Inliner(FilterWithDialog):
 	# Text field in dialog
 	strokeWidthField = objc.IBOutlet()
 	inlineWidthField = objc.IBOutlet()
+	strokeCountField = objc.IBOutlet()
 	
 	@objc.python_method
 	def settings(self):
@@ -66,9 +67,11 @@ class Inliner(FilterWithDialog):
 		# Set default value
 		Glyphs.registerDefault('com.mekkablue.Inliner.strokeWidth', 50.0)
 		Glyphs.registerDefault('com.mekkablue.Inliner.inlineWidth', 10.0)
+		Glyphs.registerDefault('com.mekkablue.Inliner.strokeCount', 2)
 		# Set value of text field
 		self.strokeWidthField.setStringValue_(Glyphs.defaults['com.mekkablue.Inliner.strokeWidth'])
 		self.inlineWidthField.setStringValue_(Glyphs.defaults['com.mekkablue.Inliner.inlineWidth'])
+		self.strokeCountField.setStringValue_(Glyphs.defaults['com.mekkablue.Inliner.strokeCount'])
 		# Set focus to text field
 		self.strokeWidthField.becomeFirstResponder()
 		
@@ -86,41 +89,61 @@ class Inliner(FilterWithDialog):
 		Glyphs.defaults['com.mekkablue.Inliner.inlineWidth'] = sender.floatValue()
 		self.update()
 	
+	@objc.IBAction
+	def setStrokeCount_( self, sender ):
+		strokes = max(1, sender.intValue())
+		sender.setStringValue_(str(strokes))
+		Glyphs.defaults['com.mekkablue.Inliner.strokeCount'] = strokes
+		self.update()
+	
 	# Actual filter
 	@objc.python_method
 	def filter(self, layer, inEditView, customParameters):
 		# Defaults
 		inlineWidth = 10.0
 		strokeWidth = 50.0
+		strokeCount = 2
 		
 		# Called on font export, get value from customParameters
 		if 'stroke' in customParameters:
-			inlineWidth = customParameters['stroke']
+			strokeWidth = float(customParameters['stroke'])
 		# Called through UI, use stored value
 		else:
-			inlineWidth = float(Glyphs.defaults['com.mekkablue.Inliner.strokeWidth'])
+			strokeWidth = float(Glyphs.defaults['com.mekkablue.Inliner.strokeWidth'])
 
 		# Called on font export, get value from customParameters
 		if 'inline' in customParameters:
-			strokeWidth = customParameters['inline']
+			inlineWidth = float(customParameters['inline'])
 		# Called through UI, use stored value
 		else:
-			strokeWidth = float(Glyphs.defaults['com.mekkablue.Inliner.inlineWidth'])
+			inlineWidth = float(Glyphs.defaults['com.mekkablue.Inliner.inlineWidth'])
+
+		# Called on font export, get value from customParameters
+		if 'count' in customParameters:
+			strokeCount = int(customParameters['count'])
+		# Called through UI, use stored value
+		else:
+			strokeCount = int(Glyphs.defaults['com.mekkablue.Inliner.strokeCount'])
 		
-		offsetStroke = (strokeWidth-inlineWidth)*0.25
-		offsetParallel = inlineWidth*0.5
-		layerL = layer.copyDecomposedLayer()
-		layerR = layer.copyDecomposedLayer()
-		# shift paths:
-		offsetLayer( layerL, -offsetParallel, makeStroke=False, position=0.5, autoStroke=False )
-		offsetLayer( layerR,  offsetParallel, makeStroke=False, position=0.5, autoStroke=False )
-		# stroke paths:
-		offsetLayer( layerL, offsetStroke, makeStroke=True, position=1.0, autoStroke=False )
-		offsetLayer( layerR, offsetStroke, makeStroke=True, position=0.0, autoStroke=False )
-		# merge them back into main layer:
+		singleStrokeWidth = (strokeWidth - (strokeCount-1)*inlineWidth) / strokeCount
+		
+		layerCopy = layer.copyDecomposedLayer()
 		layer.clear()
-		for thisLayer in (layerL, layerR):
-			for thisPath in thisLayer.paths:
+		Glyphs.clearLog() # clears macro window log
+		for i in range(strokeCount):
+			singleStrokeLayer = layerCopy.copy()
+			firstLineOffset = -strokeWidth*0.5 + singleStrokeWidth*0.5
+			currentStrokeOffset = firstLineOffset + i * (singleStrokeWidth + inlineWidth)
+			print(i,currentStrokeOffset)
+			
+			# shift paths:
+			offsetLayer( singleStrokeLayer, currentStrokeOffset, makeStroke=False, position=0.5 )
+			
+			# stroke paths:
+			offsetLayer( singleStrokeLayer, singleStrokeWidth*0.5, makeStroke=True, position=0.5 )
+			
+			# merge them back into main layer:
+			for thisPath in singleStrokeLayer.paths:
 				try:
 					# GLYPHS 3:
 					layer.shapes.append(thisPath.copy())
@@ -130,10 +153,11 @@ class Inliner(FilterWithDialog):
 	
 	@objc.python_method
 	def generateCustomParameter( self ):
-		return "%s; stroke:%s; inline:%s;" % (
+		return "%s; stroke:%s; inline:%s; count:%s" % (
 			self.__class__.__name__, 
 			Glyphs.defaults['com.mekkablue.Inliner.strokeWidth'],
 			Glyphs.defaults['com.mekkablue.Inliner.inlineWidth'],
+			Glyphs.defaults['com.mekkablue.Inliner.strokeCount'],
 			)
 	
 	@objc.python_method
