@@ -129,12 +129,12 @@ class Inliner(FilterWithDialog):
 		
 		layerCopy = layer.copyDecomposedLayer()
 		layer.clear()
-		Glyphs.clearLog() # clears macro window log
+		# Glyphs.clearLog() # clears macro window log
 		for i in range(strokeCount):
 			singleStrokeLayer = layerCopy.copy()
 			firstLineOffset = -strokeWidth*0.5 + singleStrokeWidth*0.5
 			currentStrokeOffset = firstLineOffset + i * (singleStrokeWidth + inlineWidth)
-			print(i,currentStrokeOffset)
+			# print(i,currentStrokeOffset)
 			
 			# shift paths:
 			offsetLayer( singleStrokeLayer, currentStrokeOffset, makeStroke=False, position=0.5 )
