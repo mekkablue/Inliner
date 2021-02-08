@@ -29,6 +29,6 @@
 	<key>productPageURL</key>
 	<string>https://github.com/mekkablue/Inliner</string>
 	<key>productReleaseNotes</key>
-	<string>removed debugging (caused a crash)</string>
+	<string>update binary files for Glyphs3</string>
 </dict>
 </plist>
